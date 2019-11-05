@@ -1,10 +1,12 @@
 """
+gurasog
 Forward model and anatomy setup dialog.
 
-Exposed classes
+Exposed classes 
 ---------------
 FwdSetupDialog: QDialog
     Dialog window which sets up subject, subjects_dir and forward model path
+
 
 """
 import os
