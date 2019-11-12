@@ -2,10 +2,12 @@
 
 import argparse
 import sys
-
+from matplotlib import pyplot
 # import os.path as op
+import h5py
 import logging
 import mne
+import sympy
 import numpy as np
 from PyQt5 import QtWidgets
 from cognigraph.nodes.pipeline import Pipeline

@@ -125,6 +125,8 @@ class ThreadToBeWaitedFor(QThread):
             self.exception_ocurred.emit(exc, tb)
 
     def _run(self):
+        print(self)
+        print(type(self))
         raise NotImplementedError()
 
     def no_blocking_execution(self):

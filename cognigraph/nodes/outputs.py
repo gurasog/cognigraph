@@ -137,6 +137,9 @@ class LSLStreamOutput(OutputNode):
         mne_info = self.traverse_back_and_find("mne_info")
         frequency = mne_info["sfreq"]
         channel_labels = mne_info["ch_names"]
+        file = open('testfile_gurasog_1.txt', 'w')
+        file.write(str(mne_info))
+        file.close()
         channel_types = read_channel_types(mne_info)
 
         self._outlet = create_lsl_outlet(
@@ -144,7 +147,7 @@ class LSLStreamOutput(OutputNode):
             frequency=frequency,
             channel_format=channel_format,
             channel_labels=channel_labels,
-            channel_types=channel_types,
+            channel_types=['eeg'],
         )
 
     def _update(self):
