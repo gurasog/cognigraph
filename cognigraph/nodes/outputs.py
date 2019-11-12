@@ -137,7 +137,10 @@ class LSLStreamOutput(OutputNode):
         mne_info = self.traverse_back_and_find("mne_info")
         frequency = mne_info["sfreq"]
         channel_labels = mne_info["ch_names"]
-        channel_types = read_channel_types(mne_info)
+        try:
+            channel_types = read_channel_types(mne_info)
+        except:
+            channel_types='eeg'
 
         self._outlet = create_lsl_outlet(
             name=self.stream_name,
