@@ -19,6 +19,7 @@ ConnectivityViewer: _WidgetOutput
 """
 import os
 import time
+from datetime import datetime
 from types import SimpleNamespace
 
 import tables
@@ -136,7 +137,9 @@ class LSLStreamOutput(OutputNode):
         channel_format = convert_numpy_format_to_lsl(dtype)
         mne_info = self.traverse_back_and_find("mne_info")
         frequency = mne_info["sfreq"]
-        channel_labels = mne_info["ch_names"]
+        #channel_labels = mne_info["ch_names"] #вот здесь надо поменять названия каналов из за того что они совпадают нс какоимт то говном все говняно
+        #gsogoyan98
+        channel_labels = list(map(str, np.arange(252)))
         try:
             channel_types = read_channel_types(mne_info)
         except:
@@ -148,13 +151,34 @@ class LSLStreamOutput(OutputNode):
             channel_format=channel_format,
             channel_labels=channel_labels,
             channel_types=channel_types,
+
         )
+        # gsogoyan98
+        #file = open('testfile_gurasog_29_1.txt', 'w')
+        #file.write(self.stream_name)
+        #file.write(str(frequency))
+        #file.write(str(channel_format))
+        #file.write(str(channel_labels))
+        #file.write(str(channel_types))
+        #file.close()
+        # end of
+
+    def _update_2(self):
+        chunk = self.parent.output
+        # gsogoyan 16.11.2019
+        file = open('testfile_gurasog_4_1.txt', 'w')
+        file.write(str(chunk.shape))
+        # end of
+        lsl_chunk = convert_numpy_array_to_lsl_chunk(chunk)
+        file.write(str(lsl_chunk))
+        file.close()
+        # end of
+        self._outlet.push_chunk(lsl_chunk)
 
     def _update(self):
         chunk = self.parent.output
-        lsl_chunk = convert_numpy_array_to_lsl_chunk(chunk)
+        lsl_chunk = chunk.T.tolist()
         self._outlet.push_chunk(lsl_chunk)
-
 
 class BrainViewer(_WidgetOutput):
 

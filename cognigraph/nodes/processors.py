@@ -27,7 +27,11 @@ MneGcs: ProcessorNode
     Inverse solver for connecivity estimation via Geometric Correction Scheme
 
 """
+import os
+import pickle
 import time
+from datetime import datetime
+
 import scipy as sc
 from copy import deepcopy
 
@@ -722,6 +726,12 @@ class Beamformer(_InverseSolverNode):
         )
         self._compute_filters(self._upstream_mne_info)
 
+        #gsogoyan 2.12.2019
+
+        with open('../ matrix.pickle', 'wb') as f:
+            pickle.dump(G, f)
+        #end of
+
     def _update(self):
         t1 = time.time()
         input_array = self.parent.output
@@ -1348,6 +1358,8 @@ class AtlasViewer(ProcessorNode):
                 subjects_dir=self.subjects_dir,
             )
 
+
+
             label_names = {l.name for l in labels}
             if not set(self.active_label_names).intersection(label_names):
                 self.active_label_names = []
@@ -1363,32 +1375,99 @@ class AtlasViewer(ProcessorNode):
                     np.isin(sources_idx, l.vertices)
                 )[0]
                 l.is_active = l.name in self.active_label_names
+
+
             self.labels = labels  # label objects read from filesystem
 
         except Exception as e:
             self._logger.exception(e)
             raise e
 
-    def _update(self):
+
+
+    def _update_2(self):
         data = self.parent.output
+
+
 
         n_times = data.shape[1]
         n_active_labels = len(self.active_label_names)
-
         data_label = np.zeros([n_active_labels, n_times])
+        labels_for_clasterization=[] # gsogoyan 02.12.2019
+
         active_labels = [
             l for l in self.labels if l.name in self.active_label_names
         ]
+
+
         for i, l in enumerate(active_labels):
             # Average inverse solution inside label
             # label_mask = self.source_labels == label['id']
+
             data_label[i, :] = np.mean(data[l.forward_vertices, :], axis=0)
+
+            # gsogoyan 16.11.2019
+
+        #file2 = open('testfile_gurasog_6_2'+str(datetime.today())+'.txt', 'w')
+        #file2.write(str(data_label.shape))
+        #file2.close()
+        # end of
+
+        labels_for_clasterization=labels_for_clasterization+l.forward_vertices.tolist() # gsogoyan 02.12.2019
+
+        with open('../labels_for_clasterization.pickle', 'wb') as f:
+            pickle.dump(labels_for_clasterization, f)
+
         self.output = data_label
+
+
+        # gsogoyan 16.11.2019
+        # Вот это то что выходит из список чисел который каждую секунду выходит из этой area, значит можно передавать
+        # ежесекундно именно этот набор данных , если я хочу все числа, смотрим где вызывается апдейт и там не усредяем
+        # походу тут все -таки уже среднее
+        #file = open('testfile_gurasog_3'+str(datetime.today())+'.txt', 'w')
+        #file.write(str(self.output.shape))
+        #file.close()
+        # end of
         # self._logger.debug("Output data shape is %s" % str(data.shape))
+
+
 
     def _check_value(self, key, value):
         ...
 
+ # gsogoyan 16.11.2019 ниже надо дописать фукнцию, которая будет передавать не среденее значение по листу, а целый лист!
+
+    def _update(self):
+        data = self.parent.output
+
+        n_times = data.shape[1]
+        labels_for_clasterization=[] # gsogoyan 02.12.2019
+        active_labels = [l for l in self.labels if l.name in self.active_label_names]
+        len_of_labels=[]
+
+        for i, l in enumerate(active_labels):
+            len_of_labels.append(len(l.forward_vertices))
+            labels_for_clasterization=labels_for_clasterization+l.forward_vertices.tolist() # gsogoyan 02.12.2019
+
+        data_label = np.zeros([len(labels_for_clasterization), n_times])
+
+        for i, l in enumerate(active_labels):
+            if i==0:
+                data_label[0:len_of_labels[i],:]=data[l.forward_vertices, :]
+            else:
+                data_label[sum(len_of_labels[:i]):sum(len_of_labels[:i+1]), :] = data[l.forward_vertices, :]
+                #one_more = data[l.forward_vertices, :n_times]
+                #data_label = np.concatenate((data_label, one_more), axis=0)
+
+            # Average inverse solution inside label
+            # label_mask = self.source_labels == label['id']
+
+        self.output = data_label
+        #file = open('testfile_gurasog_4' + str(datetime.today()) + '.txt', 'w')
+        #file.write(str(self.output.shape))
+        #file.close()
+#end of
 
 class AmplitudeEnvelopeCorrelations(ProcessorNode):
     """Node computing amplitude envelopes correlation
