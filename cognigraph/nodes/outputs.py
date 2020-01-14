@@ -139,7 +139,7 @@ class LSLStreamOutput(OutputNode):
         frequency = mne_info["sfreq"]
         #channel_labels = mne_info["ch_names"] #вот здесь надо поменять названия каналов из за того что они совпадают нс какоимт то говном все говняно
         #gsogoyan98
-        channel_labels = list(map(str, np.arange(252)))
+        channel_labels = list(map(str, np.arange(len(self.parent.labels_for_clasterization))))
         try:
             channel_types = read_channel_types(mne_info)
         except:
@@ -178,6 +178,9 @@ class LSLStreamOutput(OutputNode):
     def _update(self):
         chunk = self.parent.output
         lsl_chunk = chunk.T.tolist()
+        #file = open('testfile_gurasog_450' + str(datetime.today()) + '.txt', 'w')
+        #file.write(str(len(lsl_chunk[0])))
+        #file.close()
         self._outlet.push_chunk(lsl_chunk)
 
 class BrainViewer(_WidgetOutput):

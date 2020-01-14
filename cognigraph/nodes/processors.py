@@ -1304,6 +1304,18 @@ class AtlasViewer(ProcessorNode):
         self.active_label_names = active_label_names
 
         self.viz_type = "roi time series"
+        # gsogoyan 13.01.2019
+
+        self.matrix_to_send=None
+        self.active_labels=None
+        self.active_labels = None
+        self.len_of_labels = []
+        self.labels_for_clasterization =[]
+        self.data_label = None
+
+
+
+
 
     def _on_critical_attr_change(self, key, old_val, new_val) -> bool:
         if key == "parc":
@@ -1322,6 +1334,20 @@ class AtlasViewer(ProcessorNode):
 
         self.sfreq = self.traverse_back_and_find("mne_info")["sfreq"]
         self._signal_sender.initialized.emit()
+
+        # gsogoyan 02.12.2019
+
+        self.active_labels = [l for l in self.labels if l.name in self.active_label_names]
+
+        for i, l in enumerate(self.active_labels):
+            self.len_of_labels.append(len(l.forward_vertices))
+            self.labels_for_clasterization = self.labels_for_clasterization + l.forward_vertices.tolist()
+        self.data_label =np.zeros([len(self.labels_for_clasterization), 150])
+
+        #file = open('testfile_gurasog_440' + str(datetime.today()) + '.txt', 'w')
+        #file.write(str(len(self.labels_for_clasterization)))
+        #file.close()
+
 
     @property
     def mne_info(self):
@@ -1387,9 +1413,6 @@ class AtlasViewer(ProcessorNode):
 
     def _update_2(self):
         data = self.parent.output
-
-
-
         n_times = data.shape[1]
         n_active_labels = len(self.active_label_names)
         data_label = np.zeros([n_active_labels, n_times])
@@ -1438,35 +1461,60 @@ class AtlasViewer(ProcessorNode):
 
  # gsogoyan 16.11.2019 ниже надо дописать фукнцию, которая будет передавать не среденее значение по листу, а целый лист!
 
+    def _update_3(self):
+            data = self.parent.output
+
+            n_times = data.shape[1]
+            labels_for_clasterization = []  # gsogoyan 02.12.2019
+            active_labels = [l for l in self.labels if l.name in self.active_label_names]
+            len_of_labels = []
+
+            for i, l in enumerate(active_labels):
+                len_of_labels.append(len(l.forward_vertices))
+                labels_for_clasterization = labels_for_clasterization + l.forward_vertices.tolist()  # gsogoyan 02.12.2019
+
+            data_label = np.zeros([len(labels_for_clasterization), n_times])
+
+            for i, l in enumerate(active_labels):
+                if i == 0:
+                    data_label[0:len_of_labels[i], :] = data[l.forward_vertices, :]
+                else:
+                    data_label[sum(len_of_labels[:i]):sum(len_of_labels[:i + 1]), :] = data[l.forward_vertices, :]
+                    # one_more = data[l.forward_vertices, :n_times]
+                    # data_label = np.concatenate((data_label, one_more), axis=0)
+
+                # Average inverse solution inside label
+                # label_mask = self.source_labels == label['id']
+
+            self.output = data_label[0:5]
+            file = open('testfile_gurasog_4' + str(datetime.today()) + '.txt', 'w')
+            file.write(str(self.output))
+            file.close()
+
+    # end of
     def _update(self):
         data = self.parent.output
 
         n_times = data.shape[1]
-        labels_for_clasterization=[] # gsogoyan 02.12.2019
-        active_labels = [l for l in self.labels if l.name in self.active_label_names]
-        len_of_labels=[]
 
-        for i, l in enumerate(active_labels):
-            len_of_labels.append(len(l.forward_vertices))
-            labels_for_clasterization=labels_for_clasterization+l.forward_vertices.tolist() # gsogoyan 02.12.2019
 
-        data_label = np.zeros([len(labels_for_clasterization), n_times])
-
-        for i, l in enumerate(active_labels):
-            if i==0:
-                data_label[0:len_of_labels[i],:]=data[l.forward_vertices, :]
+        for i, l in enumerate(self.active_labels):
+            if i == 0:
+                self.data_label[0:self.len_of_labels[i], :n_times] = data[l.forward_vertices, :n_times]
             else:
-                data_label[sum(len_of_labels[:i]):sum(len_of_labels[:i+1]), :] = data[l.forward_vertices, :]
+                self.data_label[sum(self.len_of_labels[:i]):sum(self.len_of_labels[:i+1]), :n_times] = data[l.forward_vertices, :n_times]
                 #one_more = data[l.forward_vertices, :n_times]
                 #data_label = np.concatenate((data_label, one_more), axis=0)
 
             # Average inverse solution inside label
             # label_mask = self.source_labels == label['id']
 
-        self.output = data_label
-        #file = open('testfile_gurasog_4' + str(datetime.today()) + '.txt', 'w')
-        #file.write(str(self.output.shape))
+        self.output = self.data_label[:,:n_times]
+
+        #file = open('testfile_gurasog_430' + str(datetime.today()) + '.txt', 'w')
+        #file.write(str(self.data_label.shape))
         #file.close()
+
 #end of
 
 class AmplitudeEnvelopeCorrelations(ProcessorNode):
