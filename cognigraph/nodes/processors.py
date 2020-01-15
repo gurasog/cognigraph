@@ -728,7 +728,7 @@ class Beamformer(_InverseSolverNode):
 
         #gsogoyan 2.12.2019
 
-        with open('../ matrix.pickle', 'wb') as f:
+        with open('../../matrix.pickle', 'wb') as f:
             pickle.dump(G, f)
         #end of
 
@@ -1343,6 +1343,9 @@ class AtlasViewer(ProcessorNode):
             self.len_of_labels.append(len(l.forward_vertices))
             self.labels_for_clasterization = self.labels_for_clasterization + l.forward_vertices.tolist()
         self.data_label =np.zeros([len(self.labels_for_clasterization), 150])
+
+        with open('../labels_for_clasterization.pickle', 'wb') as f:
+            pickle.dump(self.labels_for_clasterization, f)
 
         #file = open('testfile_gurasog_440' + str(datetime.today()) + '.txt', 'w')
         #file.write(str(len(self.labels_for_clasterization)))

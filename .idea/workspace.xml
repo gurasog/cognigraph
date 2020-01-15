@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1f9b7f7e-9f25-42fa-afca-30c7ade10c1a" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/bci/catch_data.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bci/filtering.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cognigraph/nodes/outputs.py" beforeDir="false" afterPath="$PROJECT_DIR$/cognigraph/nodes/outputs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bci/gain_matrix_clasterization.py" beforeDir="false" afterPath="$PROJECT_DIR$/bci/gain_matrix_clasterization.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cognigraph/nodes/processors.py" beforeDir="false" afterPath="$PROJECT_DIR$/cognigraph/nodes/processors.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
