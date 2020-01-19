@@ -1,5 +1,5 @@
 import pickle
-
+from matplotlib import pyplot as plt
 import numpy as np
 import os
 from sklearn.cluster import KMeans
@@ -85,3 +85,48 @@ def mean_activity_acc_to_clasterization(x,predicted, clusters_number):
         list_of_mean_activity.append(sum(x[list_of_clusters_and_their_columns[0]])/len(x[list_of_clusters_and_their_columns[0]]))
 
      return list_of_mean_activity
+
+
+list_of_mean_activity = []
+list_of_var_activity = []
+
+def checking_quality_of_clusters(x,predicted,clusters_number):
+    x=np.array(x)
+    list_of_mean_activity = []
+    list_of_var_activity=[]
+    list_of_clusters_and_their_columns = []
+
+    for k in range(clusters_number):
+        list_of_clusters_and_their_columns.append([i for i, x in enumerate(predicted) if x == k])
+
+    fig, axs = plt.subplots(clusters_number, 1)
+    for i in range(clusters_number):
+        voxels_of_cluster = list_of_clusters_and_their_columns[i]
+        sum_of_voxels_of_cluster = sum(x[voxels_of_cluster])
+        num_of_voxels_of_cluster = len(voxels_of_cluster)
+        avg_activity = sum_of_voxels_of_cluster / num_of_voxels_of_cluster
+        # print("Средняя активность в канале: "+str(avg_activity))
+
+        list_of_mean_activity.append(sum_of_voxels_of_cluster / num_of_voxels_of_cluster)
+
+        variance = 0
+        # print("Количество вокрселей в кластере: "+str(len(x[voxels_of_cluster])))
+
+        for j in range(len(voxels_of_cluster)):
+            index_of_voxels_claster = voxels_of_cluster[j]  # нашли номер вокселя по которому будем делать
+            data_in_one_voxel_of_claster = x[index_of_voxels_claster]  # взяли данные из этого вокселя
+            dif = data_in_one_voxel_of_claster - avg_activity  # вычли средние
+            variance = variance + (dif) ** 2  # склыдваем суммы возведенные в квадрат
+
+        variance = variance / len(voxels_of_cluster)
+        # list_of_mean_activity.append(sum_of_voxels_of_cluster / num_of_voxels_of_cluster)
+        list_of_var_activity.append(variance)
+
+        # print(avg_activity/variance) # по идее должно быть большим
+        # list_of_var_activity=np.array(list_of_var_activity)
+        # list_of_mean_activity=np.array(list_of_mean_activity)
+        # print(list_of_var_activity/list_of_mean_activity)
+        axs[i].plot(np.arange(len(avg_activity / variance)), avg_activity / variance)
+
+    plt.show()
+

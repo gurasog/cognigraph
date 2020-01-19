@@ -45,7 +45,7 @@ def G_change(G_new,L):
     print("G_change was run")
     return G_selected_decreased
 
-def G_clasterization(G):
+def G_clasterization(G,clusters_number):
     G_1=G[:,:,0]
     G_2=G[:,:,1]
     G_3=G[:,:,2]
@@ -57,7 +57,7 @@ def G_clasterization(G):
     G_all=np.vstack((G_1_dec, G_2_dec,G_3_dec))
 
 
-    clusters_number=10
+    clusters_number=clusters_number
     km=KMeans(n_clusters=clusters_number)
     km.fit(G_all.T)
     predicted=km.predict(G_all.T)
@@ -74,6 +74,7 @@ def mean_activity_acc_to_clasterization(x,predicted, clusters_number):
     '''
     x=np.array(x)
     list_of_mean_activity = []
+    list_of_var_activity=[]
     list_of_clusters_and_their_columns = []
 
     for k in range(clusters_number):
@@ -86,8 +87,76 @@ def mean_activity_acc_to_clasterization(x,predicted, clusters_number):
 
         list_of_mean_activity.append(sum_of_voxels_of_cluster/num_of_voxels_of_cluster)
 
+
     print("mean_activity_acc_to_clasterization was run")
     return list_of_mean_activity
+
+
+def checking_quality_of_clusters(x, predicted, clusters_number):
+    x = np.array(x)
+    list_of_mean_activity = []
+    list_of_var_activity = []
+    list_of_clusters_and_their_columns = []
+
+    for k in range(clusters_number):
+        list_of_clusters_and_their_columns.append([i for i, x in enumerate(predicted) if x == k])
+
+    fig, axs = plt.subplots(clusters_number, 1)
+    for i in range(clusters_number):
+        voxels_of_cluster = list_of_clusters_and_their_columns[i]
+        sum_of_voxels_of_cluster = sum(x[voxels_of_cluster])
+        num_of_voxels_of_cluster = len(voxels_of_cluster)
+        avg_activity = sum_of_voxels_of_cluster / num_of_voxels_of_cluster
+        # print("Средняя активность в канале: "+str(avg_activity))
+
+        list_of_mean_activity.append(sum_of_voxels_of_cluster / num_of_voxels_of_cluster)
+
+        variance = 0
+        # print("Количество вокрселей в кластере: "+str(len(x[voxels_of_cluster])))
+
+        for j in range(len(voxels_of_cluster)):
+            index_of_voxels_claster = voxels_of_cluster[j]  # нашли номер вокселя по которому будем делать
+            data_in_one_voxel_of_claster = x[index_of_voxels_claster]  # взяли данные из этого вокселя
+            dif = data_in_one_voxel_of_claster - avg_activity  # вычли средние
+            variance = variance + (dif) ** 2  # склыдваем суммы возведенные в квадрат
+
+        variance = variance / len(voxels_of_cluster)
+        # list_of_mean_activity.append(sum_of_voxels_of_cluster / num_of_voxels_of_cluster)
+        list_of_var_activity.append(variance)
+
+        # print(avg_activity/variance) # по идее должно быть большим
+        # list_of_var_activity=np.array(list_of_var_activity)
+        # list_of_mean_activity=np.array(list_of_mean_activity)
+        # print(list_of_var_activity/list_of_mean_activity)
+        axs[i].plot(np.arange(len(avg_activity / variance)), avg_activity / variance)
+    print("checking_quality_of_clusters was run")
+    plt.show()
+
+def checking_plots_of_clustered_data(x, predicted, clusters_number):
+#fig, axs = plt.subplots(clusters_number, 1)
+    x = np.array(x)
+    list_of_mean_activity = []
+    list_of_var_activity = []
+    list_of_clusters_and_their_columns = []
+
+    for k in range(clusters_number):
+            list_of_clusters_and_their_columns.append([i for i, x in enumerate(predicted) if x == k])
+
+    fig = plt.figure()
+
+    for i in range(clusters_number):
+        voxels_of_cluster = list_of_clusters_and_their_columns[i]
+        amount_of_samples=len(x[0])
+        x_for_plot=np.arange(amount_of_samples)
+        ax = fig.add_subplot(5, 5, i+1)
+        for j in range(len(voxels_of_cluster)):
+            ax.plot(x_for_plot,x[j])
+
+    print("checking_plots_of_clustered_data was run")
+    plt.show()
+
+
+
 
 def my_filter(Nf, rate_1,rate_2, A, order):
     b_alpha, a_alpha = sp.butter(order, Wn = np.array([rate_1/(Nf), rate_2/(Nf)]), btype='bandpass')
@@ -114,10 +183,13 @@ def three_envelope_of_signal(signal, order, Nf):
 """START"""
 
 initial_data=prepare_data(1000)
+clusters_number=15
 G,L=read_data()
-predicted_clasters = G_clasterization(G)
-clasters_number=10
-list_of_mean_activity=mean_activity_acc_to_clasterization(initial_data, predicted_clasters, clasters_number)
+predicted_clusters = G_clasterization(G, clusters_number)
+
+list_of_mean_activity=mean_activity_acc_to_clasterization(initial_data, predicted_clusters, clusters_number)
+checking_plots_of_clustered_data(initial_data, predicted_clusters, clusters_number)
+checking_quality_of_clusters(initial_data, predicted_clusters, clusters_number)
 filter_order=6
 Fs=100
 Nf=Fs/2
@@ -125,7 +197,7 @@ Nf=Fs/2
 #получаем лист размера 10 на колчиесвто сэмплов, тут было бы уместно проделать даунсемплинг
 # вроде как это можно сделать с помощью scipy.signal.decimate пока что делать не буду
 outcome_data=[]
-for i in range(clasters_number):
+for i in range(clusters_number):
     a_1,a_2,a_3 = three_envelope_of_signal(list_of_mean_activity[i], filter_order,Nf)
     outcome_data.append(a_1)
     outcome_data.append(a_2)
