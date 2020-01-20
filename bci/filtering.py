@@ -23,21 +23,24 @@ def my_filtermy_filt(rate_1, rate_2, A):  # version according to Alex's code
     return alpha
 
 
-def my_filter(Nf, rate_1, rate_2, A, order):  # version according to Coursera's code
-    b_alpha, a_alpha = sp.butter(order, Wn=np.array([rate_1 / (Nf), rate_2 / (Nf)]), btype='bandpass')
+def my_filter(Nf, rate_1,rate_2, A, order):
+    b_alpha, a_alpha = sp.butter(order, Wn = np.array([rate_1/(Nf), rate_2/(Nf)]), btype='bandpass')
     alpha = y = sp.lfilter(b_alpha, a_alpha, A)
-    return alpha
 
+    print("my_filter was run")
+    return alpha
 
 def eneloper(signal):
     analytic_signal = hilbert(signal)
     amplitude_envelope = np.abs(analytic_signal)
+    print("eneloper was run")
     return amplitude_envelope
 
 
-def three_envelope_of_signal(signal, order):
-    theta = my_filter(4, 7, signal, order)
-    alpha = my_filter(8, 15, signal, order)
-    beta = my_filter(16, 31, signal, order)
+def three_envelope_of_signal(signal, order, Nf):
+    theta = my_filter(Nf,4, 7, signal, order)
+    alpha = my_filter(Nf,8, 15, signal, order)
+    beta = my_filter(Nf,16, 31, signal, order)
 
+    print("three_envelope_of_signal was run")
     return eneloper(theta), eneloper(alpha), eneloper(beta)
